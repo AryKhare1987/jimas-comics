@@ -1,0 +1,102 @@
+<?php
+function make_cover_svg($p, $width = 300, $height = 450) {
+    $title  = htmlspecialchars($p['title'], ENT_XML1);
+    $author = htmlspecialchars($p['author'], ENT_XML1);
+    $genre  = htmlspecialchars($p['sub'], ENT_XML1);
+    $badge  = $p['badge'] ?? '';
+    $bg     = htmlspecialchars($p['bg']);
+    $id     = $p['id'];
+
+    // Split title into two lines
+    $words = explode(' ', $p['title']);
+    $half  = ceil(count($words) / 2);
+    $line1 = htmlspecialchars(implode(' ', array_slice($words, 0, $half)), ENT_XML1);
+    $line2 = htmlspecialchars(implode(' ', array_slice($words, $half)), ENT_XML1);
+
+    // Font size based on title length
+    $len       = strlen($p['title']);
+    $titleSize = $len > 20 ? 28 : ($len > 12 ? 34 : 40);
+
+    // Badge SVG (built before the main SVG string)
+    $badgeSvg = '';
+    if ($badge) {
+        $bw       = strlen($badge) * 7 + 20;
+        $bx       = $width - $bw - 8;
+        $badgeLabel = htmlspecialchars(strtoupper($badge), ENT_XML1);
+        $textX    = $bx + $bw / 2;
+        $badgeSvg = "<rect x=\"{$bx}\" y=\"8\" width=\"{$bw}\" height=\"20\" rx=\"3\" fill=\"#e5352b\"/>"
+                  . "<text x=\"{$textX}\" y=\"22\" font-family=\"monospace\" font-size=\"9\" fill=\"white\" font-weight=\"bold\" text-anchor=\"middle\" letter-spacing=\"1\">{$badgeLabel}</text>";
+    }
+
+    $svg  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $width . ' ' . $height . '" width="' . $width . '" height="' . $height . '">';
+    $svg .= '<defs>';
+    $svg .= '<linearGradient id="bg' . $id . '" x1="0" y1="0" x2="1" y2="1">';
+    $svg .= '<stop offset="0%" stop-color="' . $bg . '"/>';
+    $svg .= '<stop offset="100%" stop-color="#0a0a0a"/>';
+    $svg .= '</linearGradient>';
+    $svg .= '<linearGradient id="shine' . $id . '" x1="0" y1="0" x2="0" y2="1">';
+    $svg .= '<stop offset="0%" stop-color="rgba(255,255,255,0.06)"/>';
+    $svg .= '<stop offset="100%" stop-color="rgba(255,255,255,0)"/>';
+    $svg .= '</linearGradient>';
+    $svg .= '</defs>';
+
+    // Background
+    $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="url(#bg' . $id . ')"/>';
+
+    // Diagonal stripes
+    $svg .= '<line x1="0" y1="0" x2="' . $width . '" y2="' . $height . '" stroke="rgba(255,255,255,0.03)" stroke-width="40"/>';
+    $svg .= '<line x1="-60" y1="0" x2="' . $width . '" y2="' . $height . '" stroke="rgba(255,255,255,0.03)" stroke-width="40"/>';
+    $svg .= '<line x1="60" y1="0" x2="' . $width . '" y2="' . $height . '" stroke="rgba(255,255,255,0.03)" stroke-width="40"/>';
+
+    // Left red accent bar
+    $svg .= '<rect x="0" y="0" width="6" height="' . $height . '" fill="#e5352b"/>';
+
+    // Shine overlay
+    $svg .= '<rect width="' . $width . '" height="' . $height . '" fill="url(#shine' . $id . ')"/>';
+
+    // Genre label
+    $svg .= '<text x="22" y="36" font-family="monospace" font-size="10" fill="#e5352b" letter-spacing="3" font-weight="bold">' . $genre . '</text>';
+
+    // Horizontal rule under genre
+    $svg .= '<line x1="22" y1="44" x2="' . $width . '" y2="44" stroke="rgba(229,53,43,0.3)" stroke-width="1"/>';
+
+    // Title lines
+    $y1 = intval($height * 0.45);
+    $y2 = $y1 + intval($titleSize * 1.25);
+    $svg .= '<text x="22" y="' . $y1 . '" font-family="Georgia,serif" font-size="' . $titleSize . '" fill="#f2f0eb" font-weight="bold">' . $line1 . '</text>';
+    if ($line2) {
+        $svg .= '<text x="22" y="' . $y2 . '" font-family="Georgia,serif" font-size="' . $titleSize . '" fill="#f2f0eb" font-weight="bold">' . $line2 . '</text>';
+    }
+
+    // Author
+    $authorY = $height - 46;
+    $svg .= '<text x="22" y="' . $authorY . '" font-family="Georgia,serif" font-size="13" fill="rgba(242,240,235,0.55)" font-style="italic">' . $author . '</text>';
+
+    // Bottom red bar
+    $svg .= '<rect x="0" y="' . ($height - 4) . '" width="' . $width . '" height="4" fill="#e5352b"/>';
+
+    // Badge (pre-built above)
+    $svg .= $badgeSvg;
+
+    $svg .= '</svg>';
+    return $svg;
+}
+
+function card_cover($p) {
+    $svg = make_cover_svg($p, 300, 450);
+    $b64 = base64_encode($svg);
+    $badge = $p['badge'] ?? '';
+    echo '<div class="card-cover" style="background:' . htmlspecialchars($p['bg']) . '">';
+    echo '<img src="data:image/svg+xml;base64,' . $b64 . '" alt="' . htmlspecialchars($p['title']) . ' cover" style="width:100%;height:100%;object-fit:cover;display:block"/>';
+    if ($badge) echo '<span class="card-badge">' . htmlspecialchars($badge) . '</span>';
+    echo '</div>';
+}
+
+function detail_cover($p) {
+    $svg = make_cover_svg($p, 400, 600);
+    $b64 = base64_encode($svg);
+    echo '<div class="detail-cover" style="background:' . htmlspecialchars($p['bg']) . ';padding:0;overflow:hidden">';
+    echo '<img src="data:image/svg+xml;base64,' . $b64 . '" alt="' . htmlspecialchars($p['title']) . ' cover" style="width:100%;height:100%;object-fit:cover;display:block"/>';
+    echo '</div>';
+}
+?>

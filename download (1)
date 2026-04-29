@@ -1,0 +1,39 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+$page = basename($_SERVER['PHP_SELF']);
+$cart_count = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jima's Comic Book Emporium</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav>
+  <a href="index.php" class="nav-logo">
+    <span class="nav-logo-dot"></span>
+    Jima's Emporium
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="index.php"    <?=$page==='index.php'  ?'class="active"':''?>>Home</a></li>
+    <li><a href="catalog.php"  <?=$page==='catalog.php'?'class="active"':''?>>Catalog</a></li>
+    <li><a href="catalog.php?genre=Manga">Manga</a></li>
+    <li><a href="catalog.php?genre=American">American</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <a href="login.php"    class="nav-link-sm">Sign in</a>
+    <a href="register.php" class="btn-nav">Join</a>
+    <a href="cart.php"     class="cart-btn">
+      Cart
+      <?php if ($cart_count > 0): ?>
+        <span class="cart-count"><?=$cart_count?></span>
+      <?php endif; ?>
+    </a>
+  </div>
+</nav>
